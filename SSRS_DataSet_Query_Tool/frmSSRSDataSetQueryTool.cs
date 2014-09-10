@@ -8,15 +8,20 @@ using System.Text;
 using System.Windows.Forms;
 using System.IO;
 using System.Xml;
+using Excel = Microsoft.Office.Interop.Excel;
 
 namespace SSRS_DataSet_Query_Tool
 {
     public partial class frmSSRSDataSetQueryTool : Form
     {
+        internal List<Report> _reports = null;
+        internal string _selectedPath = string.Empty;
+
         public frmSSRSDataSetQueryTool()
         {
             InitializeComponent();
             InitializeGrid();
+
         }
 
         private const string _subfolderPath = "Subfolder Path";
@@ -37,25 +42,27 @@ namespace SSRS_DataSet_Query_Tool
             dgvResults.AllowUserToDeleteRows = false;
         }
 
-        private void btn_GetFolder_Click(object sender, EventArgs e)
+        private void btnGetFolder_Click(object sender, EventArgs e)
         {
             DialogResult result = fbdReportsFolder.ShowDialog();
             if (result == DialogResult.OK)
             {
                 txtFolders.Text = fbdReportsFolder.SelectedPath;
-                PopulateGrid(fbdReportsFolder.SelectedPath);
+                _selectedPath = fbdReportsFolder.SelectedPath;
+                PopulateGrid(_selectedPath);
+                btnExport.Enabled = true;
             }
         }
 
         private void PopulateGrid(string selectedPath)
         {
-            List<Report> reports = new List<Report>();
+            _reports = new List<Report>();
 
             dgvResults.Rows.Clear();
 
-            reports = GetReportsFromDirectories(selectedPath);
+            _reports = GetReportsFromDirectories(selectedPath);
 
-            foreach (Report report in reports)
+            foreach (Report report in _reports)
             {
                 report.ReportDataSet = GetReportDataSets(report);
                 AddReportToGrid(report);                
@@ -147,6 +154,67 @@ namespace SSRS_DataSet_Query_Tool
                 row = new DataGridViewRow();
                 row.CreateCells(dgvResults, report.Folder, report.ReportName);
                 dgvResults.Rows.Add(row);
+            }
+        }
+
+        private void btnExport_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog sfd = new SaveFileDialog();
+            sfd.Filter = "Excel Documents (*.xls)|*.xls";
+            sfd.InitialDirectory = _selectedPath;
+            sfd.FileName = "SSRS_DataSet_Query_Tool.xls";
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                Excel._Application app = new Excel.Application();
+                Excel._Workbook workbook = app.Workbooks.Add(Type.Missing);
+                Excel._Worksheet worksheet = null;
+                worksheet = workbook.Sheets["Sheet1"];
+                worksheet = workbook.ActiveSheet;
+                worksheet.Name = "SSRS_DataSet_Query_Tool";
+
+                for (int i = 1; i < dgvResults.Columns.Count + 1; i++)
+                {
+                    worksheet.Cells[1, i] = dgvResults.Columns[i - 1].HeaderText;
+                }
+                for (int i = 0; i < dgvResults.Rows.Count - 1; i++)
+                {
+                    for (int j = 0; j < dgvResults.Columns.Count; j++)
+                    {
+                        if (dgvResults.Rows[i].Cells[j].Value != null)
+                        {
+                            worksheet.Cells[i + 2, j + 1] = " " + dgvResults.Rows[i].Cells[j].Value.ToString();
+                        }
+                        else
+                        {
+                            worksheet.Cells[i + 2, j + 1] = "";
+                        }
+                    }
+                }
+
+                workbook.SaveAs(sfd.FileName, Excel.XlFileFormat.xlWorkbookNormal);
+                workbook.Close(true);
+                app.Quit();
+
+                releaseObject(worksheet);
+                releaseObject(workbook);
+                releaseObject(app);
+            }
+        }
+        private void releaseObject(object obj)
+        {
+            try
+            {
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(obj);
+                obj = null;
+            }
+            catch (Exception ex)
+            {
+                obj = null;
+                MessageBox.Show("Exception Occured while releasing object " + ex.ToString());
+            }
+            finally
+            {
+                GC.Collect();
             }
         }
     }

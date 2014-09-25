@@ -122,10 +122,25 @@ namespace SSRS_DataSet_Query_Tool
                                     {
                                         if (queryChildNode.Name == "CommandText")
                                         {
-                                            reportDataSet.Query = queryChildNode.InnerText;
+                                            reportDataSet.Query = queryChildNode.InnerText.Trim();
                                         }
                                     }
+                                    break;
                                 }
+                                else if (dataSetChildNode.Name == "SharedDataSet")
+                                {
+                                    XmlNodeList queryChildList = dataSetChildNode.ChildNodes;
+
+                                    foreach (XmlNode queryChildNode in queryChildList)
+                                    {
+                                        if (queryChildNode.Name == "SharedDataSetReference")
+                                        {
+                                            string path = report.DirectoryName + "\\" + queryChildNode.InnerText.Trim() + ".rsd";
+                                            reportDataSet.Query = GetSharedDataSetQuery(path);
+                                        }
+                                    }
+                                    break;
+                                }                                
                             }
                         }
 
@@ -135,6 +150,50 @@ namespace SSRS_DataSet_Query_Tool
             }
 
             return reportDataSets;
+        }
+
+        private string GetSharedDataSetQuery(String path)
+        {
+            string result = string.Empty;
+
+            if (!File.Exists(path))
+                return result;
+            
+            XmlDocument xmlDocument = new XmlDocument();
+            using (StreamReader sr = new StreamReader(path))
+            {
+                xmlDocument.Load(sr);
+            }
+            XmlNode root = xmlDocument.DocumentElement;
+            XmlNodeList nodeList = root.SelectNodes("descendant::*");
+            foreach (XmlNode node in nodeList)
+            {
+                if (node.Name == "DataSet")
+                {
+                    XmlNodeList dataSetChildList = node.ChildNodes;
+
+                    foreach (XmlNode dataSetChildNode in dataSetChildList)
+                    {
+                        if (dataSetChildNode.Name == "Query")
+                        {
+                            XmlNodeList queryChildList = dataSetChildNode.ChildNodes;
+
+                            foreach (XmlNode queryChildNode in queryChildList)
+                            {
+                                if (queryChildNode.Name == "CommandText")
+                                {
+                                    result = queryChildNode.InnerText.Trim();
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+
+            return result;
         }
 
         private void AddReportToGrid(Report report)
@@ -231,6 +290,7 @@ namespace SSRS_DataSet_Query_Tool
         public string Folder { get { return _fileInfo.DirectoryName.Replace(_selectedPath, string.Empty); } }
         public string ReportName { get { return _fileInfo.Name; } }
         public string FullName { get { return _fileInfo.FullName; } }
+        public string DirectoryName { get { return _fileInfo.DirectoryName; } }
         public List<ReportDataSet> ReportDataSet { get; set; }
     }
 

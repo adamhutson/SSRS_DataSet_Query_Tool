@@ -1,6 +1,6 @@
 ﻿namespace SSRS_DataSet_Query_Tool
 {
-    partial class frmSSRSDataSetQueryTool
+    partial class SSRSDataSetQueryTool
     {
         /// <summary>
         /// Required designer variable.

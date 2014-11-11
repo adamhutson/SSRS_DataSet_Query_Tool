@@ -15,7 +15,7 @@ namespace SSRS_DataSet_Query_Tool
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new frmSSRSDataSetQueryTool());
+            Application.Run(new SSRSDataSetQueryTool());
         }
     }
 }

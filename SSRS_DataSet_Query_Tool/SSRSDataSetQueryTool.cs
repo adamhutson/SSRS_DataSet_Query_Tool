@@ -1,27 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
 using System.IO;
+using System.Windows.Forms;
 using System.Xml;
 using Excel = Microsoft.Office.Interop.Excel;
 
 namespace SSRS_DataSet_Query_Tool
 {
-    public partial class frmSSRSDataSetQueryTool : Form
+    public partial class SSRSDataSetQueryTool : Form
     {
         internal List<Report> _reports = null;
         internal string _selectedPath = string.Empty;
 
-        public frmSSRSDataSetQueryTool()
+        public SSRSDataSetQueryTool()
         {
             InitializeComponent();
             InitializeGrid();
-
         }
 
         private const string _subfolderPath = "Subfolder Path";
@@ -278,25 +272,7 @@ namespace SSRS_DataSet_Query_Tool
         }
     }
 
-    internal class Report
-    {
-        private string _selectedPath;
-        private FileInfo _fileInfo;
-        public Report(string selectedPath, FileInfo fileInfo) 
-        {
-            _selectedPath = selectedPath;
-            _fileInfo = fileInfo; 
-        }
-        public string Folder { get { return _fileInfo.DirectoryName.Replace(_selectedPath, string.Empty); } }
-        public string ReportName { get { return _fileInfo.Name; } }
-        public string FullName { get { return _fileInfo.FullName; } }
-        public string DirectoryName { get { return _fileInfo.DirectoryName; } }
-        public List<ReportDataSet> ReportDataSet { get; set; }
-    }
+    
 
-    internal class ReportDataSet
-    {
-        public string DataSetName { get; set; }
-        public string Query { get; set; }
-    }
+    
 }
